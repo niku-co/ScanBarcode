@@ -93,6 +93,10 @@
             if (devices && devices.length) {
               // تلاش برای انتخاب دوربین عقب
               const backCamera = devices.find(device => device.label.toLowerCase().includes("back")) || devices[devices.length - 1];
+                  if (!backCamera) {
+                    alert("هیچ دوربینی شناسایی نشد.");
+                    return;
+                    }
               const cameraId = backCamera.id;
       
               // نمایش اسکنر
