@@ -82,9 +82,10 @@
       
             // مرحله 2: دریافت لیست دوربین‌ها
             const devices = await Html5Qrcode.getCameras();
+            console.log("لیست دوربین‌ها:", devices);
             if (devices && devices.length) {
               // تلاش برای انتخاب دوربین عقب
-              const backCamera = devices.find(device => device.label.toLowerCase().includes("back")) || devices[devices.length - 1];
+              const backCamera = devices.find(device => device.label.toLowerCase().includes("back")) || device.label.toLowerCase().includes("rear")) || devices[devices.length - 1];
               const cameraId = backCamera.id;
       
               // نمایش اسکنر
@@ -115,7 +116,6 @@
               alert("دوربینی پیدا نشد.");
             }
           } catch (err) {
-            alert(err);
             alert("دسترسی به دوربین ممکن نیست. لطفاً اجازه دسترسی بدهید.");
             console.error(err);
           }
