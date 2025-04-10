@@ -31,12 +31,12 @@
         <form action="/scan" method="POST" class="mb-4">
             <div class="mb-3">
                 <label for="code" class="form-label">کد</label>
-                <input type="text" id="barcodeInput" class="form-control" id="code" name="code"
+                <input type="text" id="code" class="form-control" id="code" name="code"
                      placeholder="کد را اینجا وارد کنید"
                      pattern="\d{10,}" maxlength="25" inputmode="numeric" required>
             </div>
             <button type="submit" class="btn btn-primary">ثبت کد</button>
-            <button type="button" class="btn btn-success" id="btnScan">
+            <button type="button" class="btn btn-success" id="scan-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                     class="bi bi-qr-code-scan" viewBox="0 0 16 16">
                   <path d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 
@@ -51,20 +51,12 @@
                 </svg>
                 بارکد خود را اسکن کنید
               </button>
-              <button id="html5-qrcode-button-camera-permission" class="html5-qrcode-element" type="button">Request Camera Permissions</button>
-        
-       
-        <!-- دکمه اسکن -->
-<button id="scan-button" class="btn btn-success">
-    📷 اسکن کن
-  </button>
+              <!--<button id="html5-qrcode-button-camera-permission" class="html5-qrcode-element" type="button">Request Camera Permissions</button>-->
   
-  <!-- جایی برای نمایش اسکنر -->
-  <div id="qr-reader" style="width: 300px; display: none;"></div>
-  
-  <!-- فیلد برای نمایش بارکد -->
-  <input type="text" id="code" placeholder="نتیجه اسکن" class="form-control mt-2">
+  <!-- فیلد برای نمایش بارکد 
+  <input type="text" id="code" placeholder="نتیجه اسکن" class="form-control mt-2">-->
 </form>
+        <div id="qr-reader" style="width: 300px; display: none;"></div>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
