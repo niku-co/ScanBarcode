@@ -56,14 +56,14 @@
                 </svg>
                 بارکد خود را اسکن کنید
               </button>
+            <div id="qr-reader" style="width: 300px; display: none;">
+            qr-reader
+        </div>
               <!--<button id="html5-qrcode-button-camera-permission" class="html5-qrcode-element" type="button">Request Camera Permissions</button>-->
   
   <!-- فیلد برای نمایش بارکد 
   <input type="text" id="code" placeholder="نتیجه اسکن" class="form-control mt-2">-->
 </form>
-        <div id="qr-reader" style="width: 300px; display: none;">
-            qr-reader
-        </div>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
