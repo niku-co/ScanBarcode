@@ -1,0 +1,107 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .tab-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .tab-button {
+    padding: 10px 20px;
+    margin: 0 5px;
+    border: none;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+
+  .tab-button.active {
+    background-color: #3f51b5;
+    color: white;
+  }
+
+  .tab-panel {
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+
+  .scanner-container {
+    max-width: 300px;
+    max-height: 300px;
+    margin: 0 auto;
+    overflow: hidden;
+  }
+
+  #reader {
+    width: 100%;
+  }
+
+  .result-container {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    min-height: 50px;
+    background-color: #f9f9f9;
+  }
+
+  .error-message {
+    color: red;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #ffeeee;
+    border-radius: 5px;
+    border-left: 4px solid red;
+  }
+
+  .success-message {
+    color: green;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #eeffee;
+    border-radius: 5px;
+    border-left: 4px solid green;
+  }
+
+  .form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .input-field {
+    width: 100%;
+    max-width: 300px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    direction: ltr;
+  }
+
+  .submit-button {
+    padding: 10px 20px;
+    background-color: #3f51b5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  .submit-button:hover {
+    background-color: #303f9f;
+  }
+
+  .hidden {
+    display: none;
+  }
