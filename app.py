@@ -79,12 +79,12 @@ def scan():
         flash("❌ کد باید فقط عدد و حداقل ۱۰ رقم باشد!", "danger")
         return redirect(url_for('index'))
 
-    prefs = session.get('form_data')
-    if not prefs:
+    prefs = load_settings()
+    if not prefs or 'serveraddress' not in prefs:
         flash("❌ ابتدا تنظیمات را وارد کنید!", "warning")
         return redirect(url_for('index'))
 
-    server_address = prefs.get('setting1')
+    server_address = prefs.get('serveraddress')
     api_url = f"{server_address}/barcod?barcod={code}"
 
     try:
@@ -138,11 +138,8 @@ def scan():
         flash("❌ خطا در پردازش بارکد!", "danger")
         return redirect(url_for('index'))
 
-
 @app.route('/clear_session')
 def clear_session():
-    # پاک کردن session
-    #session.pop('form_data', None)
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
