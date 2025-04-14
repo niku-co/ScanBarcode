@@ -35,16 +35,16 @@
 
         <form action="{{ url_for('settings') }}" method="POST" class="mb-4 text-end">
             <div class="mb-3">
-                <label for="setting1" class="form-label">آدرس سرور :</label>
-                <input type="text" class="form-control" id="setting1" name="setting1" value="{{ form_data.get('setting1', '') }}" required>
+                <label for="serveraddress" class="form-label">آدرس سرور :</label>
+                <input type="text" class="form-control" id="serveraddress" name="serveraddress" value="{{ form_data.get('serveraddress', '') }}" required>
             </div>
             <div class="mb-3">
-                <label for="setting2" class="form-label">نام کاربری :</label>
-                <input type="text" class="form-control" id="setting2" name="setting2" value="{{ form_data.get('setting2', '') }}" required>
+                <label for="username" class="form-label">نام کاربری :</label>
+                <input type="text" class="form-control" id="username" name="username" value="{{ form_data.get('username', '') }}" required>
             </div>
             <div class="mb-3">
-                <label for="setting3" class="form-label">پسورد :</label>
-                <input type="password" class="form-control" id="setting3" name="setting3" value="{{ form_data.get('setting3', '') }}" required>
+                <label for="password" class="form-label">پسورد :</label>
+                <input type="password" class="form-control" id="password" name="password" value="{{ form_data.get('password', '') }}" required>
             </div>
             <button type="submit" class="btn btn-primary">ذخیره</button>
             <a href="{{ url_for('clear_session') }}" class="btn btn-secondary">بازگشت</a>
