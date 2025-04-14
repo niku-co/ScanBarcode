@@ -1,10 +1,22 @@
 from flask import Flask, render_template, request, redirect, url_for, session , flash
 import requests
-
+import json
+import os
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # برای استفاده از session
+app.secret_key = 'SAf4dsg#45hK4yyh145'  # برای استفاده از session
+SETTINGS_FILE = 'settings.json'
 
+def load_settings():
+    if os.path.exists(SETTINGS_FILE):
+        with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
+def save_settings(data):
+    with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -14,54 +26,49 @@ def settings():
     message = None
     error = None
 
+    # بارگذاری تنظیمات قبلی از فایل
+    form_data = load_settings()
+
     if request.method == 'POST':
         # دریافت داده‌ها از فرم
-        server_address = request.form.get('setting1')
-        username = request.form.get('setting2')
-        password = request.form.get('setting3')
+        server_address = request.form.get('serveraddress')
+        username = request.form.get('username')
+        password = request.form.get('password')
 
-        # ذخیره مقادیر فرم در session
-        session['form_data'] = {
-            'setting1': server_address,
-            'setting2': username,
-            'setting3': password
-        }
-
-        # بررسی اینکه آیا فیلدها پر شده‌اند
+        # بررسی پر بودن فیلدها
         if not server_address or not username or not password:
             error = "لطفا تمام فیلدها را پر کنید!"
         else:
-            # ارسال درخواست GET به API
+            # بررسی پسورد از API
             try:
                 url = f"{server_address}/users?password={password}"
                 response = requests.get(url)
-                
-                # بررسی پاسخ سرور
+
                 if response.status_code == 200:
                     result = response.json()
                     print("پاسخ سرور:", result)
 
-                    # بررسی محتوای پاسخ
-                    if result and isinstance(result, list) and len(result) > 0:
-                        found = False
+                    found = False
+                    if result and isinstance(result, list):
                         for item in result:
                             if "پسورد درست است" in item and item["پسورد درست است"] == "Yes":
                                 found = True
                                 break
 
-                        if found:
-                            message = "پسورد درست است! اطلاعات با موفقیت ذخیره شد."
-                        else:
-                            error = "پسورد نادرست است!"
+                    if found:
+                        message = "پسورد درست است! اطلاعات با موفقیت ذخیره شد."
+                        form_data = {
+                            'serveraddress': server_address,
+                            'username': username,
+                            'password': password
+                        }
+                        save_settings(form_data)  # ذخیره در فایل
                     else:
-                        error = "پاسخ سرور نامعتبر است!"
+                        error = "پسورد نادرست است!"
                 else:
                     error = "خطا در ارتباط با سرور!"
             except Exception as e:
                 error = "خطا در ارسال درخواست به سرور!"
-
-    # دریافت مقادیر فرم از session
-    form_data = session.get('form_data', {})
 
     return render_template('settings.html', message=message, error=error, form_data=form_data)
 
