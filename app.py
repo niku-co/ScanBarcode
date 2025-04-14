@@ -4,7 +4,8 @@ import json
 import os
 
 app = Flask(__name__)
-app.secret_key = 'SAf4dsg#45hK4yyh145'  # برای استفاده از session
+app.secret_key = 'your_secret_key'  # برای استفاده از session
+
 SETTINGS_FILE = 'settings.json'
 
 def load_settings():
@@ -16,7 +17,7 @@ def load_settings():
 def save_settings(data):
     with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
-        
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -123,6 +124,10 @@ def scan():
 
         quantity_data = quantity_response.json()
         quantity_str = quantity_data.get('Quantity')
+        topic = quantity_data.get('Topic')
+        if topic:
+            flash(f"📦 نام محصول: {topic}", "info")  # نمایش نام کالا بالای همه چیز
+
         if quantity_str:
             try:
                 quantity = float(quantity_str)
@@ -140,6 +145,8 @@ def scan():
 
 @app.route('/clear_session')
 def clear_session():
+    # پاک کردن session
+    #session.pop('form_data', None)
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
