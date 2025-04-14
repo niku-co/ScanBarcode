@@ -101,15 +101,29 @@ def scan():
             flash("⚠️ این کد قبلاً ثبت شده است.", "warning")
             return redirect(url_for('index'))
 
-        quantity_str = json_data.get('Quantity')
+        # دریافت GoodID
+        good_id = json_data.get('GoodID')
+        if not good_id:
+            flash("⚠️ مقدار GoodID پیدا نشد!", "warning")
+            return redirect(url_for('index'))
+
+        # درخواست به API دوم برای گرفتن موجودی اصلی
+        quantity_api_url = f"{server_address}/get-quantity?GoodID={good_id}"
+        quantity_response = requests.get(quantity_api_url)
+        if quantity_response.status_code != 200:
+            flash("❌ خطا در دریافت مقدار موجودی!", "danger")
+            return redirect(url_for('index'))
+
+        quantity_data = quantity_response.json()
+        quantity_str = quantity_data.get('Quantity')
         if quantity_str:
             try:
                 quantity = float(quantity_str)
                 flash(f"✅ مقدار موجود در انبار: {quantity}", "success")
             except ValueError:
-                flash("⚠️ خطا در خواندن مقدار موجودی!", "warning")
+                flash("⚠️ خطا در تبدیل مقدار موجودی!", "warning")
         else:
-            flash("⚠️ مقدار Quantity وجود ندارد!", "warning")
+            flash("⚠️ مقدار Quantity یافت نشد!", "warning")
 
         return redirect(url_for('index'))
 
