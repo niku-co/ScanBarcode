@@ -107,26 +107,25 @@
     }
 
     function generatePassword(code) {
-      if (code.length !== CODE_LENGTH) {
-        showSnack("کد باید دقیقاً ۱۰ رقم باشد.", "error");
-        return;
-      }
+  if (code.length < CODE_LENGTH) {
+    showSnack("کد باید حداقل ۱۰ رقم باشد.", "error");
+    return;
+  }
 
-      try {
-        const subCode = code.substring(0, CODE_LENGTH);
-        const list = subCode.split("");
-        const newCode = (list[4] + list[9]).toUpperCase();
-        const asciiBytes = Array.from(newCode).map((c) => c.charCodeAt(0));
-        let dynamicPass = "";
-        asciiBytes.forEach((byte) => {
-          dynamicPass += byte.toString().padStart(2, "0");
-        });
-        return dynamicPass;
-      } catch {
-        showSnack("خطا در پردازش کد.", "error");
-      }
-    }
-
+  try {
+    const subCode = code.substring(0, CODE_LENGTH);  // فقط ۱۰ کاراکتر اول
+    const list = subCode.split("");
+    const newCode = (list[4] + list[9]).toUpperCase();
+    const asciiBytes = Array.from(newCode).map((c) => c.charCodeAt(0));
+    let dynamicPass = "";
+    asciiBytes.forEach((byte) => {
+      dynamicPass += byte.toString().padStart(2, "0");
+    });
+    return dynamicPass;
+  } catch {
+    showSnack("خطا در پردازش کد.", "error");
+  }
+}
     function initScanner() {
       if (html5QrCode && html5QrCode._isScanning) return;
 
