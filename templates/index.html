@@ -80,14 +80,6 @@
     </div>
   </div>
 </div>
-
-
-    <!-- جایگاه نمایش دوربین 
-    <div id="reader" style="display: none;"></div>-->
-
-    <!-- پیام وضعیت 
-    <div id="message"></div>-->
-
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -101,90 +93,87 @@
   </div>
 <script src="{{ url_for('static', filename='qrcode.js') }}"></script>
 <script>
-  let html5QrCode;
+    let html5QrCode;
+    const CODE_LENGTH = 10;
 
-  function showSnack(text, type) {
-    const msg = document.getElementById("message");
-    msg.textContent = text;
-    msg.className = type === "error" ? "text-danger" : "text-success";
-    setTimeout(() => {
-      msg.textContent = "";
-      msg.className = "";
-    }, 3000);
-  }
-
-  function generatePassword(code) {
-    if (code.length < 10) {
-      showSnack("کد باید حداقل ۱۰ رقم داشته باشد", "error");
-      return;
+    function showSnack(text, type) {
+      const msg = document.getElementById("message");
+      msg.textContent = text;
+      msg.className = type === "error" ? "error-message" : "success-message";
+      setTimeout(() => {
+        msg.textContent = "";
+        msg.className = "";
+      }, 3000);
     }
 
-    try {
-      const subCode = code.substring(0, 10);
-      const list = subCode.split("");
-      const newCode = (list[4] + list[9]).toUpperCase();
-      const asciiBytes = Array.from(newCode).map((c) => c.charCodeAt(0));
-      let dynamicPass = "";
-      asciiBytes.forEach((byte) => {
-        dynamicPass += byte.toString().padStart(2, "0");
+    function generatePassword(code) {
+      if (code.length !== CODE_LENGTH) {
+        showSnack("کد باید دقیقاً ۱۰ رقم باشد.", "error");
+        return;
+      }
+
+      try {
+        const subCode = code.substring(0, CODE_LENGTH);
+        const list = subCode.split("");
+        const newCode = (list[4] + list[9]).toUpperCase();
+        const asciiBytes = Array.from(newCode).map((c) => c.charCodeAt(0));
+        let dynamicPass = "";
+        asciiBytes.forEach((byte) => {
+          dynamicPass += byte.toString().padStart(2, "0");
+        });
+        return dynamicPass;
+      } catch {
+        showSnack("خطا در پردازش کد.", "error");
+      }
+    }
+
+    function initScanner() {
+      if (html5QrCode && html5QrCode._isScanning) return;
+
+      Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length) {
+          const backCamera = devices.find(device =>
+            device.label.toLowerCase().includes("back")
+          ) || devices[0];
+
+          html5QrCode = new Html5Qrcode("reader");
+
+          html5QrCode.start(
+            { deviceId: { exact: backCamera.id } },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            (decodedText) => {
+              const codeInput = document.getElementById("dynamicCode");
+              codeInput.value = decodedText;
+
+              const pass = generatePassword(decodedText);
+              if (pass) {
+                showSnack(`رمز تولید شده: ${pass}`, "success");
+              }
+
+              html5QrCode.stop().then(() => {
+                document.getElementById("reader").style.display = "none";
+              });
+            },
+            (errorMsg) => {
+              console.warn("اسکن ناموفق:", errorMsg);
+            }
+          ).catch((err) => {
+            showSnack("خطا در راه‌اندازی اسکنر: " + err, "error");
+          });
+        } else {
+          showSnack("هیچ دوربینی یافت نشد.", "error");
+        }
+      }).catch(err => {
+        showSnack("خطا در دسترسی به دوربین‌ها: " + err, "error");
       });
-      return dynamicPass;
-    } catch {
-      showSnack("خطا در پردازش کد.", "error");
     }
-  }
 
-  function initScanner() {
-  if (html5QrCode) {
-    html5QrCode.stop().then(() => {
-      html5QrCode.clear();
-      html5QrCode = new Html5Qrcode("reader");
-      startScanning();
+    document.getElementById("scan-button").addEventListener("click", () => {
+      const reader = document.getElementById("reader");
+      reader.style.display = "block";
+      initScanner();
     });
-  } else {
-    html5QrCode = new Html5Qrcode("reader");
-    startScanning();
-  }
-}
-
-function startScanning() {
-  // سعی کنیم دوربین جلو (front camera) رو استفاده کنیم
-  html5QrCode.start(
-    { facingMode: "user" }, // برای دوربین جلو (گوشی‌های موبایل)
-    { fps: 10, qrbox: { width: 250, height: 250 } },
-    (decodedText) => {
-      document.getElementById("dynamicCode").value = decodedText;
-      const pass = generatePassword(decodedText);
-      if (pass) showSnack(`رمز تولید شده: ${pass}`, "success");
-
-      const modal = bootstrap.Modal.getInstance(document.getElementById("scannerModal"));
-      modal.hide();
-
-      html5QrCode.stop().then(() => html5QrCode.clear());
-    },
-    (errorMessage) => {
-      console.warn(`اسکن خطا: ${errorMessage}`);
-    }
-  ).catch((err) => {
-    showSnack("❌ خطا در شروع دوربین: " + err, "error");
-  });
-}
-
-
-  // رویداد: وقتی مدال کامل باز شد، اسکنر راه‌اندازی کن
-  document.getElementById('scannerModal').addEventListener('shown.bs.modal', function () {
-    initScanner();
-  });
-
-  // رویداد: وقتی مدال بسته شد، اسکنر رو متوقف کن
-  document.getElementById('scannerModal').addEventListener('hidden.bs.modal', function () {
-    if (html5QrCode) {
-      html5QrCode.stop().then(() => html5QrCode.clear());
-    }
-  });
-</script>
-
-
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <div >version.0.1-1</div>
 </body>
