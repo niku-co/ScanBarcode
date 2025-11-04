@@ -13,11 +13,12 @@
     }
 
     #reader {
-      width: 250px;
-      height: 250px;
+      width: 300px;
+      height: 200px;
       margin: 0 auto;
       border: 2px solid #007bff;
       border-radius: 10px;
+      overflow: hidden;
     }
 
     #message {
@@ -38,7 +39,7 @@
     </a>
 
     <h1 class="mb-4">با نیکو هم مسیر شوید...</h1>
-    <p>لطفا کد را با استفاده از دوربین دستگاه اسکن فرمایید.</p>
+    <p>لطفا کد را با استفاده از دوربین پشت دستگاه اسکن فرمایید.</p>
 
     <!-- فرم ارسال کد -->
     <form action="/scan" method="POST" class="mb-4">
@@ -50,7 +51,7 @@
       </div>
       <button type="submit" class="btn btn-primary">ثبت کد</button>
       <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#scannerModal">
-        📷 بارکد خود را اسکن کنید
+        📷 اسکن با دوربین پشت
       </button>
     </form>
 
@@ -88,7 +89,6 @@
   <script>
     let html5QrCode;
     let isFlashOn = false;
-    let cameraId = null;
 
     function showMessage(text, type = "success") {
       const msg = document.getElementById("message");
@@ -103,31 +103,27 @@
       html5QrCode = new Html5Qrcode("reader");
 
       try {
-        const devices = await Html5Qrcode.getCameras();
-        if (devices && devices.length) {
-          cameraId = devices[0].id; // انتخاب دوربین اصلی
-          await html5QrCode.start(
-            cameraId,
-            {
-              fps: 15,
-              qrbox: { width: 250, height: 250 },
-              aspectRatio: 1.0,
-              experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-            },
-            (decodedText) => {
-              document.getElementById("dynamicCode").value = decodedText;
-              const modalElement = document.getElementById("scannerModal");
-              const modalInstance = bootstrap.Modal.getInstance(modalElement);
-              modalInstance.hide();
-              html5QrCode.stop().then(() => html5QrCode.clear());
-            },
-            (errorMessage) => {
-              console.warn("خطا در اسکن:", errorMessage);
-            }
-          );
-        } else {
-          showMessage("❌ هیچ دوربینی یافت نشد!", "error");
-        }
+        await html5QrCode.start(
+          { facingMode: "environment" }, // فقط دوربین پشت
+          {
+            fps: 15,
+            qrbox: { width: 300, height: 200 },
+            aspectRatio: 1.5,
+            experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+          },
+          (decodedText) => {
+            document.getElementById("dynamicCode").value = decodedText;
+
+            const modalElement = document.getElementById("scannerModal");
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            modalInstance.hide();
+
+            html5QrCode.stop().then(() => html5QrCode.clear());
+          },
+          (errorMessage) => {
+            console.warn("در حال اسکن...", errorMessage);
+          }
+        );
       } catch (err) {
         showMessage("❌ خطا در راه‌اندازی دوربین: " + err, "error");
       }
@@ -135,33 +131,23 @@
 
     // کنترل فلش
     document.getElementById("toggle-flash").addEventListener("click", async () => {
-      if (!html5QrCode || !cameraId) return;
+      if (!html5QrCode) return;
       try {
-        if (isFlashOn) {
-          await html5QrCode.applyVideoConstraints({ advanced: [{ torch: false }] });
-          document.getElementById("toggle-flash").textContent = "🔦 روشن کردن فلش";
-        } else {
-          await html5QrCode.applyVideoConstraints({ advanced: [{ torch: true }] });
-          document.getElementById("toggle-flash").textContent = "💡 خاموش کردن فلش";
-        }
+        await html5QrCode.applyVideoConstraints({ advanced: [{ torch: !isFlashOn }] });
         isFlashOn = !isFlashOn;
+        document.getElementById("toggle-flash").textContent = isFlashOn ? "💡 خاموش کردن فلش" : "🔦 روشن کردن فلش";
       } catch {
-        showMessage("⚠️ دستگاه شما از فلش پشتیبانی نمی‌کند.", "error");
+        showMessage("⚠️ فلش در این دستگاه در دسترس نیست.", "error");
       }
     });
 
     // شروع و توقف اسکن
-    document.getElementById("scannerModal").addEventListener("shown.bs.modal", () => {
-      initScanner();
-    });
-
+    document.getElementById("scannerModal").addEventListener("shown.bs.modal", initScanner);
     document.getElementById("scannerModal").addEventListener("hidden.bs.modal", () => {
-      if (html5QrCode) {
-        html5QrCode.stop().then(() => html5QrCode.clear());
-      }
+      if (html5QrCode) html5QrCode.stop().then(() => html5QrCode.clear());
     });
   </script>
 
-  <div>V.0.4</div>
+  <div>V.0.5</div>
 </body>
 </html>
