@@ -12,17 +12,20 @@
     }
 
     #reader {
-      width: 100%;
-      margin: 0 auto;
-      padding-top: 10px;
-    }
+    width: 100%;
+    margin: 0 auto;
+    padding-top: 10px;
+  }
 
-    #reader video {
-      max-width: 220px !important;
-      border-radius: 10px;
-      margin: 0 auto;
-      display: block;
-    }
+    /* اندازه کوچک‌تر برای ویدیو */
+  #reader video {
+    width: 180px !important;   /* حدود 5cm */
+    height: 110px !important;  /* حدود 3cm */
+    border-radius: 10px;
+    margin: 0 auto;
+    display: block;
+    object-fit: cover;
+  }
 
     #message {
       text-align: center;
@@ -130,7 +133,7 @@
 
       html5QrCode.start(
         { facingMode: "environment" },
-        { fps: 5, qrbox: { width: 180, height: 180 }, aspectRatio: 1.0 },
+        { fps: 5, qrbox: { width: 180, height: 110 }, aspectRatio: 1.0 },
         (decodedText) => {
           document.getElementById("dynamicCode").value = decodedText;
 
@@ -163,3 +166,4 @@
   <div class="text-muted mt-3">V.0.3</div>
 </body>
 </html>
+
