@@ -1,155 +1,132 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>📦 اسکنر سریع نیکو</title>
-
-  <!-- Bootstrap -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>اسکنر نیکو</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <!-- ZXing (اول از فایل local بخون، اگه نبود از CDN بخون) -->
-  <script defer src="{{ url_for('static', filename='zxing.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='zxing.min.js') }}"></script>
 
   <style>
-    body { 
-      font-family: 'Vazir', sans-serif; 
-      text-align: center; 
-      background-color: #f8f9fa; 
+    body {
+      font-family: 'Vazir', sans-serif;
+      background-color: #f8f9fa;
+      text-align: center;
     }
-    .logo { width: 100px; margin: 15px 0; }
+    .logo {
+      width: 100px;
+      height: auto;
+      margin: 20px auto;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .logo:active {
+      transform: scale(0.95);
+    }
     #video-preview {
-      width: 260px;
-      height: 190px;
+      width: 280px;
+      height: 200px;
       border: 2px solid #007bff;
       border-radius: 10px;
-      display: block;
       margin: 10px auto;
+      display: block;
       object-fit: cover;
-      background: #000;
     }
-    #message { font-size: 14px; color: #555; text-align: center; }
+    #scannerModal .modal-content {
+      border-radius: 15px;
+    }
   </style>
 </head>
 <body>
-
   <div class="container mt-4">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="لوگو نیکو" class="logo">
-    <h5>📸 اسکن بارکد با نیکو</h5>
 
-    <form action="/update-delivery" method="POST">
-      <input type="text" id="dynamicCode" name="code" class="form-control text-center mb-3" placeholder="کد شناسایی" required>
-      <button type="button" id="openScannerBtn" class="btn btn-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#scannerModal">
-        🚀 شروع اسکن
-      </button>
-      <button type="submit" class="btn btn-primary w-100">✅ ثبت کد</button>
+    <!-- 🔹 لوگو (با نگه داشتن برای ورود به تنظیمات) -->
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="لوگو نیکو" id="logo" class="logo">
+
+    <h4 class="mb-4">سیستم اسکن و ثبت نیکو</h4>
+
+    <!-- 🔹 فرم ارسال -->
+    <form id="scanForm" action="/update-delivery" method="POST">
+      <input type="text" id="dynamicCode" name="code" class="form-control mb-3 text-center" placeholder="کد شناسایی" required>
+      <button type="submit" class="btn btn-primary w-100 mb-3">ثبت کد</button>
     </form>
+
+    <!-- 🔹 دکمه اسکن -->
+    <button id="scanBtn" class="btn btn-success w-100">📷 شروع اسکن</button>
   </div>
 
-  <!-- Modal دوربین -->
+  <!-- 🔹 مودال دوربین -->
   <div class="modal fade" id="scannerModal" tabindex="-1" aria-labelledby="scannerModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content text-center">
+      <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="scannerModalLabel">اسکن کد با دوربین</h5>
+          <h5 class="modal-title">اسکن بارکد</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
         </div>
         <div class="modal-body">
-          <video id="video-preview" autoplay playsinline muted></video>
-          <div id="message" class="mt-2">در حال آماده‌سازی...</div>
+          <video id="video-preview" autoplay playsinline></video>
+          <div id="message" class="text-muted mt-2">در حال آماده‌سازی دوربین...</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="closeScan" class="btn btn-danger" data-bs-dismiss="modal">توقف</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- لودر ZXing -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    async function ensureZXing() {
-      if (window.ZXing) return true;
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    const videoElement = document.getElementById('video-preview');
+    const messageEl = document.getElementById('message');
+    const scanBtn = document.getElementById('scanBtn');
+    const modal = new bootstrap.Modal(document.getElementById('scannerModal'));
+    const closeBtn = document.getElementById('closeScan');
+    let isScanning = false;
+
+    // 📸 دکمه شروع اسکن
+    scanBtn.addEventListener('click', async () => {
+      modal.show();
+      messageEl.textContent = "در حال راه‌اندازی دوربین...";
+      isScanning = true;
       try {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.src = 'https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js';
-          s.onload = resolve;
-          s.onerror = reject;
-          document.head.appendChild(s);
-        });
-        return !!window.ZXing;
-      } catch (e) {
-        console.error('❌ ZXing load failed:', e);
-        return false;
-      }
-    }
-  </script>
+        const devices = await codeReader.listVideoInputDevices();
+        const backCam = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[0];
 
-  <!-- منطق اسکن -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const videoEl = document.getElementById('video-preview');
-      const msgEl = document.getElementById('message');
-      const modalEl = document.getElementById('scannerModal');
-      let codeReader = null;
-
-      modalEl.addEventListener('shown.bs.modal', async () => {
-        msgEl.textContent = '📷 در حال آماده‌سازی دوربین...';
-        const ok = await ensureZXing();
-        if (!ok) {
-          msgEl.textContent = '❌ خطا: ZXing بارگذاری نشد.';
-          return;
-        }
-
-        try {
-          codeReader = new ZXing.BrowserMultiFormatReader();
-          const devices = await codeReader.listVideoInputDevices();
-          const backCam = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[devices.length - 1];
-          if (!backCam) {
-            msgEl.textContent = '🚫 دوربینی پیدا نشد!';
-            return;
+        await codeReader.decodeFromVideoDevice(backCam.deviceId, videoElement, (result, err) => {
+          if (result) {
+            document.getElementById('dynamicCode').value = result.text;
+            messageEl.textContent = "✅ کد شناسایی شد!";
+            setTimeout(() => {
+              modal.hide();
+              stopScan();
+            }, 700);
           }
-
-          const constraints = {
-            video: {
-              deviceId: { exact: backCam.deviceId },
-              width: { ideal: 640 },
-              height: { ideal: 480 },
-              facingMode: 'environment'
-            }
-          };
-
-          await codeReader.decodeFromConstraints(constraints, videoEl, (result, err) => {
-            if (result) {
-              document.getElementById('dynamicCode').value = result.text;
-              msgEl.textContent = "✅ کد شناسایی شد!";
-              setTimeout(() => {
-                stopScan();
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                modal?.hide();
-              }, 500);
-            }
-          });
-
-          msgEl.textContent = '🔎 در حال اسکن...';
-        } catch (err) {
-          console.error(err);
-          msgEl.textContent = '🚫 خطا در دسترسی به دوربین: ' + err.message;
-        }
-      });
-
-      modalEl.addEventListener('hidden.bs.modal', stopScan);
-
-      async function stopScan() {
-        if (codeReader) {
-          try { await codeReader.reset(); } catch (_) {}
-        }
-        if (videoEl?.srcObject) {
-          videoEl.srcObject.getTracks().forEach(t => t.stop());
-          videoEl.srcObject = null;
-        }
+        });
+        messageEl.textContent = "📷 در حال اسکن...";
+      } catch (err) {
+        console.error(err);
+        messageEl.textContent = "❌ خطا در دسترسی به دوربین: " + err.message;
       }
     });
-  </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <div>V.0.4</div>
+    // 🛑 توقف اسکن
+    async function stopScan() {
+      await codeReader.reset();
+      isScanning = false;
+    }
+
+    closeBtn.addEventListener('click', stopScan);
+
+    // ⚙️ نگه داشتن روی لوگو برای رفتن به صفحه تنظیمات
+    let pressTimer;
+    const logo = document.getElementById('logo');
+    logo.addEventListener('touchstart', () => {
+      pressTimer = setTimeout(() => {
+        window.location.href = "/settings";
+      }, 1500); // نگه داشتن ۱.۵ ثانیه
+    });
+    logo.addEventListener('touchend', () => clearTimeout(pressTimer));
+  </script>
 </body>
 </html>
