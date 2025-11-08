@@ -5,181 +5,147 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>بارکد اسکنر نیکو</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="{{ url_for('static', filename='zxing.min.js') }}"></script>
   <style>
     body {
-      font-family: 'Vazirmatn', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       direction: rtl;
-      background-color: #f8f9fa;
-      text-align: center;
     }
-    .logo {
-      width: 100px;
-      cursor: pointer;
-      margin-bottom: 10px;
-      transition: transform 0.2s;
+
+    #reader {
+      width: 300px;
+      margin: 0 auto;
+      padding-top: 20px;
     }
-    .logo:active {
-      transform: scale(0.95);
-    }
-    #video-preview {
-      width: 100%;
-      max-width: 320px;
-      height: 220px;
-      border: 3px solid #007bff;
-      border-radius: 12px;
-      margin: 15px auto;
-      display: block;
-      object-fit: cover;
-      background-color: #000;
-      filter: contrast(1.3) brightness(1.1);
-    }
+
     #message {
-      margin-top: 10px;
-      font-weight: 600;
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .error-message {
+      color: red;
+    }
+
+    .success-message {
+      color: green;
     }
   </style>
 </head>
-<body>
+<body class="text-center">
   <div class="container mt-5">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="لوگو" id="logo" class="logo">
-    <h3>با نیکو هم مسیر شوید...</h3>
-    <p class="text-muted mb-4">لطفاً کد را با اسکن یا ورود دستی ثبت کنید.</p>
+    <a href="{{ url_for('settings') }}">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="لوگو" class="mb-2" style="width: 100px;">
+    </a>
+    <h1 class="mb-4">با نیکو هم مسیر شوید...</h1>
+    <p class="instruction">لطفا کد را با استفاده از دوربین دستگاه اسکن فرمایید.</p>
 
-    <form id="scanForm" action="/scan" method="POST">
+    <!-- فرم ارسال کد -->
+    <form action="/scan" method="POST" class="mb-4">
       <div class="mb-3">
-        <label for="dynamicCode" class="form-label">کد</label>
-        <input type="text" class="form-control text-center" id="dynamicCode" name="code" placeholder="کد را وارد یا اسکن کنید">
+        <label for="code" class="form-label">کد</label>
+        <input type="text" class="form-control" name="code" id="dynamicCode"
+          placeholder="کد را اینجا وارد کنید"
+          pattern="\d{10,}" maxlength="25" inputmode="numeric" required>
       </div>
-      <div class="d-grid gap-2">
-        <button type="submit" class="btn btn-primary">ثبت کد</button>
-        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#scannerModal">
-          📷 اسکن با دوربین
-        </button>
-      </div>
+      <button type="submit" class="btn btn-primary">ثبت کد</button>
+      <button type="button" class="btn btn-success" id="scan-button" data-bs-toggle="modal" data-bs-target="#scannerModal">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+          class="bi bi-qr-code-scan" viewBox="0 0 16 16">
+          <path d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 
+            .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 
+            .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 
+            .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z"></path>
+          <path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z"></path>
+          <path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z"></path>
+          <path d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 
+            2h-1v1h-2v1h3zm-4 2v-1H8v1z"></path>
+          <path d="M12 9h2V8h-2z"></path>
+        </svg>
+        بارکد خود را اسکن کنید
+      </button>
     </form>
-
-    <div class="modal fade" id="scannerModal" tabindex="-1" aria-labelledby="scannerModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content text-center">
-          <div class="modal-header">
-            <h5 class="modal-title">اسکن بارکد</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
-          </div>
-          <div class="modal-body">
-            <video id="video-preview" autoplay playsinline muted></video>
-            <div id="message" class="text-muted">در حال آماده‌سازی دوربین...</div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" id="closeScan" class="btn btn-danger" data-bs-dismiss="modal">توقف اسکن</button>
-          </div>
-        </div>
+<!-- Modal -->
+<div class="modal fade" id="scannerModal" tabindex="-1" aria-labelledby="scannerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center">
+      <div class="modal-header">
+        <h5 class="modal-title" id="scannerModalLabel">اسکن بارکد</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
+      </div>
+      <div class="modal-body">
+        <div id="reader" style="width: 100%;"></div>
+        <div id="message" class="mt-3"></div>
       </div>
     </div>
-
-    <p class="text-muted mt-3">نسخه ۲.۳</p>
   </div>
+</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="بستن"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+<script src="{{ url_for('static', filename='qrcode.js') }}"></script>
+<script>
+  let html5QrCode;
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    const codeReader = new ZXing.BrowserMultiFormatReader();
-    const video = document.getElementById('video-preview');
-    const messageEl = document.getElementById('message');
-    const modalEl = document.getElementById('scannerModal');
-    const closeBtn = document.getElementById('closeScan');
-    let currentStream = null;
-    let isScanning = false;
+  function showMessage(text, type = "success") {
+    const msg = document.getElementById("message");
+    msg.textContent = text;
+    msg.className = type === "error" ? "text-danger" : "text-success";
+    setTimeout(() => {
+      msg.textContent = "";
+      msg.className = "";
+    }, 3000);
+  }
 
-    modalEl.addEventListener('shown.bs.modal', async () => {
-      if (isScanning) return;
-      isScanning = true;
-      messageEl.textContent = "در حال فعال‌سازی دوربین...";
+  function initScanner() {
+    if (html5QrCode && html5QrCode._isScanning) return;
 
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(d => d.kind === 'videoinput');
-        const backCam = videoDevices.find(d => /back|rear|environment/i.test(d.label)) || videoDevices[0];
-        if (!backCam) throw new Error("دوربین پیدا نشد!");
+    html5QrCode = new Html5Qrcode("reader");
 
-        const constraints = {
-          video: {
-            deviceId: backCam.deviceId ? { exact: backCam.deviceId } : undefined,
-            facingMode: "environment"
-          }
-        };
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        // مقدار رو داخل input بریز
+        document.getElementById("dynamicCode").value = decodedText;
 
-        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = currentStream;
-        await video.play();
+        // بستن مدال
+        const modalElement = document.getElementById("scannerModal");
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        modalInstance.hide();
 
-        codeReader.decodeFromVideoDevice(backCam.deviceId, 'video-preview', async (result, err) => {
-          if (result) {
-            const rawCode = result.text;
-            document.getElementById('dynamicCode').value = rawCode;
-            messageEl.textContent = "در حال ثبت...";
-            stopCamera();
-
-            // بستن مودال بعد از اسکن
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-
-            // ارسال خودکار به سرور با fetch
-            try {
-              const response = await fetch('/scan', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `code=${encodeURIComponent(rawCode)}`
-              });
-              if (response.redirected) {
-                window.location.href = response.url;
-              } else {
-                alert('خطا در ثبت کد!');
-              }
-            } catch (e) {
-              console.error(e);
-              alert('❌ خطا در ارسال داده!');
-            }
-          }
-
-          if (err && !(err instanceof ZXing.NotFoundException)) {
-            console.warn('خطای اسکن:', err);
-          }
-        });
-
-        messageEl.textContent = "در حال اسکن...";
-      } catch (err) {
-        messageEl.innerHTML = `<span class='text-danger'>خطا: ${err.message}</span>`;
-        isScanning = false;
+        // توقف دوربین
+        html5QrCode.stop().then(() => html5QrCode.clear());
+      },
+      (errorMessage) => {
+        console.warn("خطا در اسکن:", errorMessage);
       }
+    ).catch((err) => {
+      showMessage("❌ خطا در راه‌اندازی دوربین: " + err, "error");
     });
+  }
 
-    function stopCamera() {
-      if (currentStream) {
-        currentStream.getTracks().forEach(t => t.stop());
-        currentStream = null;
-      }
-      try { codeReader.reset(); } catch {}
-      video.srcObject = null;
-      isScanning = false;
+  // وقتی مدال باز شد، اسکنر راه‌اندازی شود
+  document.getElementById('scannerModal').addEventListener('shown.bs.modal', () => {
+    initScanner();
+  });
+
+  // وقتی مدال بسته شد، اسکنر متوقف شود
+  document.getElementById('scannerModal').addEventListener('hidden.bs.modal', () => {
+    if (html5QrCode) {
+      html5QrCode.stop().then(() => html5QrCode.clear());
     }
-
-    modalEl.addEventListener('hidden.bs.modal', stopCamera);
-    closeBtn.addEventListener('click', stopCamera);
-
-    // لوگو → نگه‌داشتن برای تنظیمات
-    let pressTimer;
-    const logo = document.getElementById('logo');
-    ['touchstart', 'mousedown'].forEach(evt => {
-      logo.addEventListener(evt, e => {
-        e.preventDefault();
-        pressTimer = setTimeout(() => {
-          window.location.href = "/settings";
-        }, 1500);
-      });
-    });
-    ['touchend', 'mouseup', 'mouseleave'].forEach(evt => {
-      logo.addEventListener(evt, () => clearTimeout(pressTimer));
-    });
-  </script>
+  });
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <div >V.0.3</div>
 </body>
 </html>
