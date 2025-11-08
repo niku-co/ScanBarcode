@@ -5,18 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>بارکد اسکنر نیکو</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- استفاده از فایل محلی ZXing (چون قبلاً داشتی) -->
   <script src="{{ url_for('static', filename='zxing.min.js') }}"></script>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Vazirmatn', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       direction: rtl;
       background-color: #f8f9fa;
+      text-align: center;
+    }
+    .logo {
+      width: 100px;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: transform 0.2s;
+    }
+    .logo:active {
+      transform: scale(0.95);
     }
     #video-preview {
       width: 100%;
-      max-width: 300px;
-      height: 200px;
+      max-width: 320px;
+      height: 220px;
       border: 3px solid #007bff;
       border-radius: 12px;
       margin: 15px auto;
@@ -26,57 +35,40 @@
       filter: contrast(1.3) brightness(1.1);
     }
     #message {
-      text-align: center;
       margin-top: 10px;
-      font-weight: bold;
-      font-size: 1.1rem;
-    }
-    .logo {
-      width: 90px;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    .logo:active {
-      transform: scale(0.95);
-    }
-    .btn-scan {
-      font-size: 1.1rem;
-      padding: 12px;
+      font-weight: 600;
     }
   </style>
 </head>
-<body class="text-center">
+<body>
   <div class="container mt-5">
-    <a href="{{ url_for('settings') }}">
-      <img src="{{ url_for('static', filename='logo.png') }}" alt="لوگو" id="logo" class="logo mb-2">
-    </a>
-    <h1 class="mb-4">با نیکو هم مسیر شوید...</h1>
-    <p class="instruction">لطفاً کد را با استفاده از دوربین دستگاه اسکن کنید.</p>
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="لوگو" id="logo" class="logo">
+    <h3>با نیکو هم مسیر شوید...</h3>
+    <p class="text-muted mb-4">لطفاً کد را با اسکن یا ورود دستی ثبت کنید.</p>
 
-    <form id="scanForm" action="/scan" method="POST" class="mb-4">
+    <form id="scanForm" action="/scan" method="POST">
       <div class="mb-3">
-        <label for="code" class="form-label">کد</label>
-        <input type="text" class="form-control text-center" name="code" id="dynamicCode"
-               placeholder="کد را اینجا وارد کنید" maxlength="25" inputmode="numeric">
-        <!-- حذف pattern و required برای جلوگیری از بلاک شدن -->
+        <label for="dynamicCode" class="form-label">کد</label>
+        <input type="text" class="form-control text-center" id="dynamicCode" name="code" placeholder="کد را وارد یا اسکن کنید">
       </div>
-      <button type="submit" class Aerospace btn-primary w-100 mb-2">ثبت کد</button>
-      <button type="button" class="btn btn-success w-100 btn-scan" id="scan-button" data-bs-toggle="modal" data-bs-target="#scannerModal">
-        بارکد خود را اسکن کنید
-      </button>
+      <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary">ثبت کد</button>
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#scannerModal">
+          📷 اسکن با دوربین
+        </button>
+      </div>
     </form>
 
-    <!-- Modal -->
     <div class="modal fade" id="scannerModal" tabindex="-1" aria-labelledby="scannerModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content text-center">
           <div class="modal-header">
-            <h5 class="modal-title" id="scannerModalLabel">اسکن بارکد</h5>
+            <h5 class="modal-title">اسکن بارکد</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
           </div>
           <div class="modal-body">
             <video id="video-preview" autoplay playsinline muted></video>
-            <div id="message" class="mt-3 text-muted">در حال آماده‌سازی دوربین...</div>
+            <div id="message" class="text-muted">در حال آماده‌سازی دوربین...</div>
           </div>
           <div class="modal-footer">
             <button type="button" id="closeScan" class="btn btn-danger" data-bs-dismiss="modal">توقف اسکن</button>
@@ -85,7 +77,7 @@
       </div>
     </div>
 
-    <div class="mt-4 text-muted">V.2.2 - ثبت خودکار با fetch</div>
+    <p class="text-muted mt-3">نسخه ۲.۳</p>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -95,7 +87,6 @@
     const messageEl = document.getElementById('message');
     const modalEl = document.getElementById('scannerModal');
     const closeBtn = document.getElementById('closeScan');
-    const form = document.getElementById('scanForm');
     let currentStream = null;
     let isScanning = false;
 
@@ -113,10 +104,7 @@
         const constraints = {
           video: {
             deviceId: backCam.deviceId ? { exact: backCam.deviceId } : undefined,
-            facingMode: "environment",
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30 }
+            facingMode: "environment"
           }
         };
 
@@ -127,48 +115,40 @@
         codeReader.decodeFromVideoDevice(backCam.deviceId, 'video-preview', async (result, err) => {
           if (result) {
             const rawCode = result.text;
-            const codeInput = document.getElementById('dynamicCode');
-            codeInput.value = rawCode;
-
-            messageEl.textContent = "در حال ارسال...";
-
+            document.getElementById('dynamicCode').value = rawCode;
+            messageEl.textContent = "در حال ثبت...";
             stopCamera();
 
-            setTimeout(() => {
-              const modal = bootstrap.Modal.getInstance(modalEl);
-              if (modal) modal.hide();
-            }, 300);
+            // بستن مودال بعد از اسکن
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
 
-            // ارسال با fetch (بدون ولیدیشن)
-            setTimeout(async () => {
-              try {
-                const response = await fetch('/scan', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                  body: `code=${encodeURIComponent(rawCode)}`
-                });
-
-                if (response.ok || response.redirected) {
-                  window.location.href = response.url || '/scan';
-                } else {
-                  alert('خطا در ثبت کد!');
-                }
-              } catch (e) {
-                console.error(e);
-                alert('خطا در ارتباط با سرور!');
+            // ارسال خودکار به سرور با fetch
+            try {
+              const response = await fetch('/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `code=${encodeURIComponent(rawCode)}`
+              });
+              if (response.redirected) {
+                window.location.href = response.url;
+              } else {
+                alert('خطا در ثبت کد!');
               }
-            }, 600);
+            } catch (e) {
+              console.error(e);
+              alert('❌ خطا در ارسال داده!');
+            }
           }
 
           if (err && !(err instanceof ZXing.NotFoundException)) {
-            console.warn("خطای اسکن:", err);
+            console.warn('خطای اسکن:', err);
           }
         });
 
         messageEl.textContent = "در حال اسکن...";
-
       } catch (err) {
-        messageEl.innerHTML = `<span class="text-danger">خطا: ${err.message}</span>`;
+        messageEl.innerHTML = `<span class='text-danger'>خطا: ${err.message}</span>`;
         isScanning = false;
       }
     });
@@ -186,11 +166,11 @@
     modalEl.addEventListener('hidden.bs.modal', stopCamera);
     closeBtn.addEventListener('click', stopCamera);
 
-    // لوگو برای تنظیمات
+    // لوگو → نگه‌داشتن برای تنظیمات
     let pressTimer;
     const logo = document.getElementById('logo');
     ['touchstart', 'mousedown'].forEach(evt => {
-      logo.addEventListener(evt, (e) => {
+      logo.addEventListener(evt, e => {
         e.preventDefault();
         pressTimer = setTimeout(() => {
           window.location.href = "/settings";
