@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>بارکد اسکنر نیکو</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- آخرین نسخه ZXing از CDN -->
+  <!-- استفاده از فایل محلی ZXing (چون قبلاً داشتی) -->
   <script src="{{ url_for('static', filename='zxing.min.js') }}"></script>
   <style>
     body {
@@ -48,31 +48,20 @@
 <body class="text-center">
   <div class="container mt-5">
     <a href="{{ url_for('settings') }}">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="لوگو" id="logo" class="logo mb-2"></a>
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="لوگو" id="logo" class="logo mb-2">
+    </a>
     <h1 class="mb-4">با نیکو هم مسیر شوید...</h1>
     <p class="instruction">لطفاً کد را با استفاده از دوربین دستگاه اسکن کنید.</p>
 
     <form id="scanForm" action="/scan" method="POST" class="mb-4">
       <div class="mb-3">
         <label for="code" class="form-label">کد</label>
-        <input type="text" class="form-control" name="code" id="dynamicCode"
-          placeholder="کد را اینجا وارد کنید"
-          pattern="\d{10,}" maxlength="25" inputmode="numeric" required>
+        <input type="text" class="form-control text-center" name="code" id="dynamicCode"
+               placeholder="کد را اینجا وارد کنید" maxlength="25" inputmode="numeric">
+        <!-- حذف pattern و required برای جلوگیری از بلاک شدن -->
       </div>
-      <button type="submit" class="btn btn-primary w-100 mb-2">ثبت کد</button>
-      <button type="button" class="btn btn-success" id="scan-button" data-bs-toggle="modal" data-bs-target="#scannerModal">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-          class="bi bi-qr-code-scan" viewBox="0 0 16 16">
-          <path d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 
-            .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 
-            .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 
-            .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z"></path>
-          <path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z"></path>
-          <path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z"></path>
-          <path d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 
-            2h-1v1h-2v1h3zm-4 2v-1H8v1z"></path>
-          <path d="M12 9h2V8h-2z"></path>
-        </svg>
+      <button type="submit" class Aerospace btn-primary w-100 mb-2">ثبت کد</button>
+      <button type="button" class="btn btn-success w-100 btn-scan" id="scan-button" data-bs-toggle="modal" data-bs-target="#scannerModal">
         بارکد خود را اسکن کنید
       </button>
     </form>
@@ -96,12 +85,11 @@
       </div>
     </div>
 
-    <div class="mt-4 text-muted">V.2.1</div>
+    <div class="mt-4 text-muted">V.2.2 - ثبت خودکار با fetch</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // متغیرهای اصلی
     const codeReader = new ZXing.BrowserMultiFormatReader();
     const video = document.getElementById('video-preview');
     const messageEl = document.getElementById('message');
@@ -111,56 +99,63 @@
     let currentStream = null;
     let isScanning = false;
 
-    // وقتی مودال باز میشه
     modalEl.addEventListener('shown.bs.modal', async () => {
       if (isScanning) return;
       isScanning = true;
       messageEl.textContent = "در حال فعال‌سازی دوربین...";
 
       try {
-        // 1. لیست دستگاه‌ها
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(d => d.kind === 'videoinput');
         const backCam = videoDevices.find(d => /back|rear|environment/i.test(d.label)) || videoDevices[0];
-
         if (!backCam) throw new Error("دوربین پیدا نشد!");
 
-        // 2. تنظیمات بهینه برای Chrome
         const constraints = {
           video: {
             deviceId: backCam.deviceId ? { exact: backCam.deviceId } : undefined,
             facingMode: "environment",
-            width: { min: 640, ideal: 1280, max: 1920 },
-            height: { min: 480, ideal: 720, max: 1080 },
-            frameRate: { ideal: 30, min: 15 }
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30 }
           }
         };
 
-        // 3. گرفتن استریم
         currentStream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = currentStream;
         await video.play();
 
-        // 4. شروع اسکن
-        codeReader.decodeFromVideoDevice(backCam.deviceId, 'video-preview', (result, err) => {
+        codeReader.decodeFromVideoDevice(backCam.deviceId, 'video-preview', async (result, err) => {
           if (result) {
+            const rawCode = result.text;
             const codeInput = document.getElementById('dynamicCode');
-            codeInput.value = result.text;
+            codeInput.value = rawCode;
+
             messageEl.textContent = "در حال ارسال...";
 
-            // توقف دوربین
             stopCamera();
 
-            // بستن مودال
             setTimeout(() => {
               const modal = bootstrap.Modal.getInstance(modalEl);
               if (modal) modal.hide();
             }, 300);
 
-            // ارسال خودکار فرم
-            setTimeout(() => {
-              if (form) {
-                form.submit();
+            // ارسال با fetch (بدون ولیدیشن)
+            setTimeout(async () => {
+              try {
+                const response = await fetch('/scan', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                  body: `code=${encodeURIComponent(rawCode)}`
+                });
+
+                if (response.ok || response.redirected) {
+                  window.location.href = response.url || '/scan';
+                } else {
+                  alert('خطا در ثبت کد!');
+                }
+              } catch (e) {
+                console.error(e);
+                alert('خطا در ارتباط با سرور!');
               }
             }, 600);
           }
@@ -170,54 +165,41 @@
           }
         });
 
-        messageEl.textContent = "در حال اسکن... بارکد را در کادر قرار دهید.";
+        messageEl.textContent = "در حال اسکن...";
 
       } catch (err) {
-        console.error("خطا:", err);
         messageEl.innerHTML = `<span class="text-danger">خطا: ${err.message}</span>`;
         isScanning = false;
       }
     });
 
-    // توقف دوربین
     function stopCamera() {
       if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
+        currentStream.getTracks().forEach(t => t.stop());
         currentStream = null;
       }
-      try { codeReader.reset(); } catch (e) {}
+      try { codeReader.reset(); } catch {}
       video.srcObject = null;
       isScanning = false;
     }
 
-    // وقتی مودال بسته میشه
-    modalEl.addEventListener('hidden.bs.modal', () => {
-      stopCamera();
-    });
+    modalEl.addEventListener('hidden.bs.modal', stopCamera);
+    closeBtn.addEventListener('click', stopCamera);
 
-    // دکمه توقف
-    closeBtn.addEventListener('click', () => {
-      stopCamera();
-    });
-
-    // نگه داشتن لوگو برای تنظیمات
+    // لوگو برای تنظیمات
     let pressTimer;
     const logo = document.getElementById('logo');
-    logo.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      pressTimer = setTimeout(() => {
-        window.location.href = "/settings";
-      }, 1500);
+    ['touchstart', 'mousedown'].forEach(evt => {
+      logo.addEventListener(evt, (e) => {
+        e.preventDefault();
+        pressTimer = setTimeout(() => {
+          window.location.href = "/settings";
+        }, 1500);
+      });
     });
-    logo.addEventListener('touchend', () => clearTimeout(pressTimer));
-    logo.addEventListener('mousedown', (e) => {
-      pressTimer = setTimeout(() => {
-        window.location.href = "/settings";
-      }, 1500);
+    ['touchend', 'mouseup', 'mouseleave'].forEach(evt => {
+      logo.addEventListener(evt, () => clearTimeout(pressTimer));
     });
-    logo.addEventListener('mouseup', () => clearTimeout(pressTimer));
-    logo.addEventListener('mouseleave', () => clearTimeout(pressTimer));
   </script>
 </body>
 </html>
-
