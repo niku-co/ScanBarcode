@@ -39,15 +39,24 @@
     }
 
     .logo {
-      width: 100px;
+      width: 90px;
       user-select: none;
       margin-bottom: 10px;
     }
 
     #video-preview {
-      width: 100%;
+      width: 250px;
+      height: 250px;
       border-radius: 10px;
+      border: 3px solid #0d6efd;
       background: #000;
+      object-fit: cover;
+      margin: 0 auto;
+    }
+
+    .alert {
+      text-align: right;
+      direction: rtl;
     }
   </style>
 </head>
@@ -61,12 +70,13 @@
   <!-- لوگو -->
   <img src="{{ url_for('static', filename='logo.png') }}" alt="لوگو" class="logo">
 
-  <h4 class="mb-4">📦 اسکن یا ثبت بارکد</h4>
+  <h5 class="mb-4">📦 با نیکو هم‌مسیر شوید</h5>
 
   <!-- فرم -->
-  <form method="POST" action="/scan" class="container" style="max-width:400px;">
+  <form method="POST" action="/scan" class="container" style="max-width:380px;">
     <div class="mb-3">
-      <input type="text" id="dynamicCode" name="code" class="form-control text-center" placeholder="کد را وارد یا اسکن کنید">
+      <input type="text" id="dynamicCode" name="code" class="form-control text-center"
+             placeholder="کد را وارد یا اسکن کنید" maxlength="25" required>
     </div>
     <div class="d-grid gap-2">
       <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#scannerModal">
@@ -78,10 +88,24 @@
     </div>
   </form>
 
+  <!-- پیام‌های Flask -->
+  <div class="container mt-3" style="max-width:380px;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="بستن"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
   <!-- مودال اسکن -->
   <div class="modal fade" id="scannerModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
+      <div class="modal-content text-center">
         <div class="modal-header bg-dark text-white">
           <h6 class="modal-title">اسکن با دوربین</h6>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -98,7 +122,6 @@
   </div>
 
   <script>
-    // ZXing setup
     const codeReader = new ZXing.BrowserMultiFormatReader();
     const video = document.getElementById('video-preview');
     const messageEl = document.getElementById('message');
@@ -133,34 +156,20 @@
           if (result) {
             const rawCode = result.text;
             document.getElementById('dynamicCode').value = rawCode;
-            messageEl.textContent = "در حال ثبت...";
+            messageEl.textContent = "✅ کد شناسایی شد!";
             stopCamera();
 
             const modal = bootstrap.Modal.getInstance(modalEl);
             if (modal) modal.hide();
-
-            try {
-              const response = await fetch('/scan', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `code=${encodeURIComponent(rawCode)}`
-              });
-              if (response.redirected) window.location.href = response.url;
-              else alert('خطا در ثبت کد!');
-            } catch (e) {
-              console.error(e);
-              alert('❌ خطا در ارسال داده!');
-            }
           }
-
           if (err && !(err instanceof ZXing.NotFoundException)) {
             console.warn('خطای اسکن:', err);
           }
         });
 
-        messageEl.textContent = "در حال اسکن...";
+        messageEl.textContent = "📷 در حال اسکن...";
       } catch (err) {
-        messageEl.innerHTML = `<span class='text-danger'>خطا: ${err.message}</span>`;
+        messageEl.innerHTML = `<span class='text-danger'>❌ ${err.message}</span>`;
         isScanning = false;
       }
     });
@@ -178,5 +187,7 @@
     modalEl.addEventListener('hidden.bs.modal', stopCamera);
     closeBtn.addEventListener('click', stopCamera);
   </script>
+
+  <div class="text-muted mt-4">V.1.6</div>
 </body>
 </html>
