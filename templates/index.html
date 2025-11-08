@@ -16,13 +16,14 @@
 
     #video-preview {
       width: 100%;
-      max-width: 320px;
-      height: 240px;
+      max-width: 260px; /* کوچیک‌تر برای گوشی */
+      height: 180px;
       border: 2px solid #007bff;
       border-radius: 10px;
       margin: 10px auto;
       display: block;
       object-fit: cover;
+      background-color: #000;
     }
 
     #message {
@@ -31,11 +32,8 @@
       font-weight: bold;
     }
 
-    .text-success { color: green; }
-    .text-danger { color: red; }
-
     .logo {
-      width: 100px;
+      width: 90px;
       cursor: pointer;
       transition: transform 0.2s;
     }
@@ -52,7 +50,6 @@
     <h1 class="mb-4">با نیکو هم مسیر شوید...</h1>
     <p class="instruction">لطفاً کد را با استفاده از دوربین دستگاه اسکن کنید.</p>
 
-    <!-- فرم ارسال -->
     <form action="/scan" method="POST" class="mb-4">
       <div class="mb-3">
         <label for="code" class="form-label">کد</label>
@@ -61,7 +58,7 @@
                maxlength="25" required>
       </div>
       <button type="submit" class="btn btn-primary w-100 mb-2">ثبت کد</button>
-      <button type="button" class="btn btn-success w-100" id="scanBtn" data-bs-toggle="modal" data-bs-target="#scannerModal">
+      <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#scannerModal">
         📷 اسکن بارکد
       </button>
     </form>
@@ -85,48 +82,47 @@
       </div>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="بستن"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-
-    <div class="mt-4 text-muted">V.1.4</div>
+    <div class="mt-4 text-muted">V.1.5</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
     const codeReader = new ZXing.BrowserMultiFormatReader();
-    const videoElement = document.getElementById('video-preview');
+    const video = document.getElementById('video-preview');
     const messageEl = document.getElementById('message');
-    const closeBtn = document.getElementById('closeScan');
     const modalEl = document.getElementById('scannerModal');
+    const closeBtn = document.getElementById('closeScan');
     let isScanning = false;
 
-    // شروع اسکن وقتی مودال باز می‌شود
     modalEl.addEventListener('shown.bs.modal', async () => {
-      messageEl.textContent = "در حال راه‌اندازی دوربین...";
+      messageEl.textContent = "در حال فعال‌سازی دوربین...";
       isScanning = true;
       try {
         const devices = await codeReader.listVideoInputDevices();
         const backCam = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[0];
-        await codeReader.decodeFromVideoDevice(backCam.deviceId, videoElement, (result, err) => {
+
+        const constraints = {
+          video: {
+            deviceId: backCam.deviceId,
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            focusMode: "continuous",
+            facingMode: "environment"
+          }
+        };
+
+        await codeReader.decodeFromConstraints(constraints, video, (result, err) => {
           if (result) {
             document.getElementById('dynamicCode').value = result.text;
             messageEl.textContent = "✅ کد شناسایی شد!";
             setTimeout(() => {
-              const modal = bootstrap.Modal.getInstance(modalEl);
-              modal.hide();
+              bootstrap.Modal.getInstance(modalEl).hide();
               stopScan();
-            }, 700);
+            }, 600);
           }
         });
+
         messageEl.textContent = "📷 در حال اسکن...";
       } catch (err) {
         console.error(err);
@@ -134,12 +130,11 @@
       }
     });
 
-    // توقف اسکن وقتی مودال بسته می‌شود
     modalEl.addEventListener('hidden.bs.modal', stopScan);
     closeBtn.addEventListener('click', stopScan);
 
-    async function stopScan() {
-      try { await codeReader.reset(); } catch {}
+    function stopScan() {
+      try { codeReader.reset(); } catch {}
       isScanning = false;
     }
 
@@ -153,4 +148,3 @@
   </script>
 </body>
 </html>
-
