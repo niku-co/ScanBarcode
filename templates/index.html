@@ -59,11 +59,13 @@
 </head>
 <body>
 
-  <!-- دکمه تنظیمات بالا سمت چپ -->
+  <!-- دکمه تنظیمات بالا سمت چپ 
   <button class="settings-btn" onclick="window.location.href='/settings'">
     ⚙️
-  </button>
-
+  </button>-->
+  <a href="/settings" style="position: fixed;top: 12px;left: 12px;font-size: 28px;color: #0d6efd;text-decoration: none; z-index: 1050;">
+  ⚙️
+  </a>
   <!-- لوگو -->
   <img src="{{ url_for('static', filename='logo.png') }}" alt="لوگو" class="logo">
 
