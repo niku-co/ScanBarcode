@@ -20,22 +20,19 @@
       position: fixed;
       top: 10px;
       left: 10px;
-      background: #0d6efd;
-      color: white;
       border: none;
-      border-radius: 50%;
       width: 45px;
       height: 45px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      
       z-index: 1050;
     }
 
     .settings-btn:hover {
-      background: #0b5ed7;
+      background: #737373;
     }
 
     .logo {
@@ -70,7 +67,7 @@
   <!-- لوگو -->
   <img src="{{ url_for('static', filename='logo.png') }}" alt="لوگو" class="logo">
 
-  <h5 class="mb-4">📦 با نیکو هم‌مسیر شوید</h5>
+  <h5 class="mb-4">با نیکو هم‌مسیر شوید...</h5>
 
   <!-- فرم -->
   <form method="POST" action="/scan" class="container" style="max-width:380px;">
@@ -188,6 +185,6 @@
     closeBtn.addEventListener('click', stopCamera);
   </script>
 
-  <div class="text-muted mt-4">V.1.6</div>
+  <div class="text-muted mt-4">نسخه 1.6</div>
 </body>
 </html>
